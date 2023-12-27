@@ -35,6 +35,19 @@ For the creation of augmented datasets with uniform object orientation distribut
 ```
 python Augmentation/augm.py --image_path "The path to the images directory" --annotation_path "The path to the annotations directory" --aug_image_path "The path to the directory where the augmented images will be saved" --aug_annotation_path "The path to the directory where the annotations of the augmented images will be saved" --dataset_type "dataset name" --augm_method "The augmentation method to be used"
 ```
+## Citation
+If you find this work useful for your research, please cite
+```
+@InProceedings{Savathrakis_2024_WACV,
+    author    = {Savathrakis, Giorgos and Argyros, Antonis},
+    title     = {An Automated Method for the Creation of Oriented Bounding Boxes in Remote Sensing Ship Detection Datasets},
+    booktitle = {Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) Workshops},
+    month     = {January},
+    year      = {2024},
+    pages     = {830-839}
+}
+```
+
 ## Acknowledgements
 
 <details><summary> Expand </summary>
