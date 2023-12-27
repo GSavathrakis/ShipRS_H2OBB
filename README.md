@@ -24,6 +24,7 @@ git clone https://github.com/GSavathrakis/hbb_to_obb.git
 cd hbb_to_obb
 ```
 Download the segment-anything model checkpoint from the [official segment-anything model repo](https://github.com/facebookresearch/segment-anything)
+
 ## Obb generation
 To use the method for the creation of OBBs from HBBs , run
 ```
@@ -35,7 +36,8 @@ For the creation of augmented datasets with uniform object orientation distribut
 python Augmentation/augm.py --image_path "The path to the images directory" --annotation_path "The path to the annotations directory" --aug_image_path "The path to the directory where the augmented images will be saved" --aug_annotation_path "The path to the directory where the annotations of the augmented images will be saved" --dataset_type "dataset name" --augm_method "The augmentation method to be used"
 ```
 # Acknowledgements
+
 <details><summary> Expand </summary>
-* [https://github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything)
-* [https://github.com/open-mmlab/mmrotate](https://github.com/open-mmlab/mmrotate)
+  [https://github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything)
+  [https://github.com/open-mmlab/mmrotate](https://github.com/open-mmlab/mmrotate)
 </details>
