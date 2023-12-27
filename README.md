@@ -38,6 +38,6 @@ python Augmentation/augm.py --image_path "The path to the images directory" --an
 # Acknowledgements
 
 <details><summary> Expand </summary>
-  [https://github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything)
-  [https://github.com/open-mmlab/mmrotate](https://github.com/open-mmlab/mmrotate)
+  * [https://github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything)
+  * [https://github.com/open-mmlab/mmrotate](https://github.com/open-mmlab/mmrotate)
 </details>
