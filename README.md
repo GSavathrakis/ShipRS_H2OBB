@@ -10,6 +10,7 @@ Additionally, this method can be used to create augmented versions of the datase
 Firstly, an anaconda environment needs to be set with a python>=3.9
 ```
 conda create -n "env name" python="3.9 or above"
+conda activate "env name"
 ```
 Then install pytorch, torchvision and the segment anything model
 ```
