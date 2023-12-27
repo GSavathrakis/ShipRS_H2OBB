@@ -35,8 +35,7 @@ For the creation of augmented datasets with uniform object orientation distribut
 python Augmentation/augm.py --image_path "The path to the images directory" --annotation_path "The path to the annotations directory" --aug_image_path "The path to the directory where the augmented images will be saved" --aug_annotation_path "The path to the directory where the annotations of the augmented images will be saved" --dataset_type "dataset name" --augm_method "The augmentation method to be used"
 ```
 # Acknowledgements
-<details>
-  <summary>Expand</summary>
-    - [https://github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything)
-    - [https://github.com/open-mmlab/mmrotate](https://github.com/open-mmlab/mmrotate)
+<details><summary> Expand </summary>
+* [https://github.com/facebookresearch/segment-anything](https://github.com/facebookresearch/segment-anything)
+* [https://github.com/open-mmlab/mmrotate](https://github.com/open-mmlab/mmrotate)
 </details>
