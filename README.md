@@ -5,5 +5,5 @@ Given images with objects with Horizontal Bounding Box annotations, the proposed
 \
 ![alt text](https://github.com/GSavathrakis/hbb_to_obb/blob/main/Figures/model_arch.png?raw=true)
 \
-Additionally, this method can be used to create augmented versions of the dataset in a manner that resolves the objects' orientation imbalance.\
+Additionally, this method can be used to create augmented versions of the dataset in a manner that resolves the objects' orientation imbalance.
 # Installation
