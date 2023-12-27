@@ -7,3 +7,12 @@ Given images with objects with Horizontal Bounding Box annotations, the proposed
 \
 Additionally, this method can be used to create augmented versions of the dataset in a manner that resolves the objects' orientation imbalance.
 # Installation
+Firstly, an anaconda environment needs to be set with a python>=3.9\
+```
+conda create -n "env name" python="3.9 or above"\
+```
+Then install pytorch, torchvision and the segment anything model\
+```
+conda install pytorch torchvision\
+pip install git+https://github.com/facebookresearch/segment-anything.git
+```
