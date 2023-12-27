@@ -16,3 +16,14 @@ Then install pytorch, torchvision and the segment anything model
 conda install pytorch torchvision
 pip install git+https://github.com/facebookresearch/segment-anything.git
 ```
+# Usage
+Initially, clone the repository.
+```
+git clone https://github.com/GSavathrakis/hbb_to_obb.git
+cd hbb_to_obb
+```
+## Obb generation
+To use the method for the creation of OBBs from HBBs , run
+```
+python OBB_generation/generate.py --dataset "dataset name" --image_path "The path to the images directory" --annotation_path "The path to the annotations directory" --sam_checkpoint_path "The path to where the segment-anything checkpoint is stored" --new_annotations_dir "The path where the newly created OBB annotations will be saved" --gen_mode
+```
