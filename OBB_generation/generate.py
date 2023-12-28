@@ -227,7 +227,14 @@ def main(args):
 	print(f'% objects with IOU>80%: {len(np.where(IOUs>=0.8)[0])/len(IOUs)*100}')
 	print(f'% objects with IOU>70%: {len(np.where(IOUs>=0.7)[0])/len(IOUs)*100}')
 	print(f'% objects with IOU>60%: {len(np.where(IOUs>=0.6)[0])/len(IOUs)*100}')
-	
+
+
+	# Uncomment to save numpy arrays with object IoUs, class, and orientation distributions
+	"""
+	np.save('IOU', IOUs)
+	np.save('gt_classes', Classes)
+	np.savetxt('Classes_n_Angles_corr.csv', Angles_per_class, delimiter=',')
+	"""
 	
 	
 	
