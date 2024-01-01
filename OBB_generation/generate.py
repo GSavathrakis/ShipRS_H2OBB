@@ -11,7 +11,7 @@ import copy
 
 from segment_anything import sam_model_registry, SamPredictor
 
-from utils.annot_utils import xml_OBB_reader, write_OBBs, create_XML
+from utils.annot_utils import xml_OBB_reader, create_XML
 from utils import bbox_utils
 
 
