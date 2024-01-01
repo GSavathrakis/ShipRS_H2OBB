@@ -174,7 +174,7 @@ def angle_calc_for_IOU_thres(image, image_name , masks, diag_dir, labels, IOUs, 
 
 
 def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
-	if args.augm_mode:
+	if args.gen_mode:
 		aug_dir_path_annot = os.path.join('/'+os.path.join(*args.image_path.split('/')[:-1]), args.new_annotations_dir)
 		if not os.path.exists(aug_dir_path_annot):
 			os.mkdir(aug_dir_path_annot)
@@ -191,7 +191,7 @@ def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 		classes.append(labels[:,0])
 		masks, diag_dir = one_img_sam(args, image, labels.astype(float), predictor)
 		mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
-		if args.augm_mode:
+		if args.gen_mode:
 			annot = os.path.join(aug_dir_path_annot, annotation_filenames[i])
 			create_XML(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, Cls, args.dataset)
 		
