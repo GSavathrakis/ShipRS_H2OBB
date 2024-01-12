@@ -15,8 +15,8 @@ from utils.annot_utils import xml_OBB_reader, create_XML
 from utils import bbox_utils
 
 
-parser = argparse.ArgumentParser('Set transformer detector', add_help=False)
-parser.add_argument('--dataset', type=str, choices=['HRSC2016', 'ShipRSImageNet'])
+parser = argparse.ArgumentParser('Set segment anything model', add_help=False)
+parser.add_argument('--dataset', type=str, choices=['HRSC2016', 'ShipRSImageNet', 'DOTA'])
 parser.add_argument('--image_path', type=str)
 parser.add_argument('--annotation_path', type=str)
 parser.add_argument('--sam_checkpoint_path', type=str)
