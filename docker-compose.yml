@@ -1,0 +1,22 @@
+version: '3.4'
+
+services:
+  dev_env:
+    runtime: nvidia
+    build: .
+    shm_size: 8gb
+    volumes:
+    # - mount_html:/mnt/html
+    #  - mount_interhands:/mnt/interhands
+    #  - mount_texture_nn:/mnt/texture_nn
+      - .:/workspace/
+      - /home/giorgos/Desktop/Datasets/DOTA_v1.5:/workspace/DOTA_v1.5
+    #  - mount_results:/mnt/Results
+    #environment:
+    #  PYTHONPATH: ${PYTHONPATH}:/mnt/html
+    #  PATHS_DATA: /workspace/data
+    #  PATHS_DATASET: /mnt/interhands
+    #  PATHS_TEXTURENN: /mnt/texture_nn/netsub1.pt
+    #  PATHS_HTML: /mnt/html
+    #  PATHS_RESULTS: /mnt/Results
+    command: tail -F anything
