@@ -20,7 +20,7 @@ parser.add_argument('--dataset', type=str, choices=['HRSC2016', 'ShipRSImageNet'
 parser.add_argument('--image_path', type=str)
 parser.add_argument('--annotation_path', type=str)
 parser.add_argument('--sam_checkpoint_path', type=str)
-parser.add_argument('--new_annotations_dir', type=str)
+parser.add_argument('--new_annotations_path', type=str)
 parser.add_argument('--IOU_thres', type=float, default=0.7)
 parser.add_argument('--kernel_size_perc', type=float, default=0.03)
 parser.add_argument('--kernel_type', type=str, default='ellipsoid')
@@ -175,7 +175,7 @@ def angle_calc_for_IOU_thres(image, image_name , masks, diag_dir, labels, IOUs, 
 
 def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 	if args.gen_mode:
-		aug_dir_path_annot = os.path.join('/'+os.path.join(*args.image_path.split('/')[:-1]), args.new_annotations_dir)
+		aug_dir_path_annot = args.new_annotations_path#os.path.join('/'+os.path.join(*args.image_path.split('/')[:-1]), args.new_annotations_dir)
 		if not os.path.exists(aug_dir_path_annot):
 			os.mkdir(aug_dir_path_annot)
 		
