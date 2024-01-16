@@ -33,7 +33,7 @@ def xml_OBB_reader(annotation_file, dataset_type):
 	annot_file = open(annotation_file, 'r')
 	tree = ET.parse(annot_file)
 	root = tree.getroot()
-	#coors=None
+	objs_ex = False
 	if dataset_type=='HRSC2016':
 		objs = root.find('HRSC_Objects')
 		n_obj=0
@@ -52,6 +52,7 @@ def xml_OBB_reader(annotation_file, dataset_type):
 			else:
 				coors = np.vstack([coors, [Class_id, cx, cy, w, h]])
 			n_obj+=1
+			objs_ex=True
 	elif dataset_type=='ShipRSImageNet':
 		n_obj=0
 		for j in root.iter('object'):
@@ -70,6 +71,7 @@ def xml_OBB_reader(annotation_file, dataset_type):
 			else:
 				coors = np.vstack([coors, [Class_id, cx, cy, w, h]])
 			n_obj+=1
+			objs_ex=True
 	elif dataset_type=='DOTA':
 		n_obj=0
 		for j in root.iter('object'):
@@ -90,13 +92,14 @@ def xml_OBB_reader(annotation_file, dataset_type):
 			else:
 				coors = np.vstack([coors, [Class_id, cx, cy, w, h]])
 			n_obj+=1
+			objs_ex=True
 
 
 	annot_file.close()
-	if coors:
-		return coors.reshape(-1,5)
+	if objs_ex==True:
+		return coors.reshape(-1,5), objs_ex
 	else:
-		return None
+		return None, objs_ex
 
 def create_XML(annotation_file, im_w, im_h, objs_rboxes, objs_hboxes, Classes, dataset_type):
 	if dataset_type=='HRSC2016':

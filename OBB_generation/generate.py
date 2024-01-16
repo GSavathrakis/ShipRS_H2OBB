@@ -187,8 +187,8 @@ def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 	for i in tqdm(range(0,len(image_filenames)), desc='Segmented images'):
 		image = cv2.imread(os.path.join(args.image_path, image_filenames[i]))
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-		labels = xml_OBB_reader(os.path.join(args.annotation_path, annotation_filenames[i]), args.dataset)
-		if labels!=None:
+		labels, exist_obj = xml_OBB_reader(os.path.join(args.annotation_path, annotation_filenames[i]), args.dataset)
+		if exist_obj==True:
 			classes.append(labels[:,0])
 			masks, diag_dir = one_img_sam(args, image, labels.astype(float), predictor)
 			mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
