@@ -188,12 +188,16 @@ def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 		image = cv2.imread(os.path.join(args.image_path, image_filenames[i]))
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		labels = xml_OBB_reader(os.path.join(args.annotation_path, annotation_filenames[i]), args.dataset)
-		classes.append(labels[:,0])
-		masks, diag_dir = one_img_sam(args, image, labels.astype(float), predictor)
-		mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
-		if args.gen_mode:
-			annot = os.path.join(aug_dir_path_annot, annotation_filenames[i])
-			create_XML(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, Cls, args.dataset)
+		if labels!=None:
+			classes.append(labels[:,0])
+			masks, diag_dir = one_img_sam(args, image, labels.astype(float), predictor)
+			mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
+			if args.gen_mode:
+				annot = os.path.join(aug_dir_path_annot, annotation_filenames[i])
+				create_XML(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, Cls, args.dataset)
+		else:
+			if args.gen_mode:
+				os.system(f'cp {os.path.join(args.annotation_path, annotation_filenames[i])} {os.path.join(aug_dir_path_annot, annotation_filenames[i])}')
 		
 	angle_info = np.array(angle_info)
 	return IOUs, angle_info, classes, length_info, opening_ang_info

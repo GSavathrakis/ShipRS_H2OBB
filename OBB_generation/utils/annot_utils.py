@@ -33,6 +33,7 @@ def xml_OBB_reader(annotation_file, dataset_type):
 	annot_file = open(annotation_file, 'r')
 	tree = ET.parse(annot_file)
 	root = tree.getroot()
+	coors=None
 	if dataset_type=='HRSC2016':
 		objs = root.find('HRSC_Objects')
 		n_obj=0
@@ -92,7 +93,10 @@ def xml_OBB_reader(annotation_file, dataset_type):
 
 
 	annot_file.close()
-	return coors.reshape(-1,5)
+	if coors!=None:
+		return coors.reshape(-1,5)
+	else:
+		return coors
 
 def create_XML(annotation_file, im_w, im_h, objs_rboxes, objs_hboxes, Classes, dataset_type):
 	if dataset_type=='HRSC2016':
