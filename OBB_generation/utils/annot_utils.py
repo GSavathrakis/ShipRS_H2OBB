@@ -29,12 +29,13 @@ def annot_classes(annotation_file):
 		
 	return Classes
 
-def xml_OBB_reader(annotation_file, dataset_type):
+def file_OBB_reader(annotation_file, dataset_type):
 	annot_file = open(annotation_file, 'r')
-	tree = ET.parse(annot_file)
-	root = tree.getroot()
 	objs_ex = False
+	extra_desc=[]
 	if dataset_type=='HRSC2016':
+		tree = ET.parse(annot_file)
+		root = tree.getroot()
 		objs = root.find('HRSC_Objects')
 		n_obj=0
 		for j in objs.iter('HRSC_Object'):
@@ -54,6 +55,8 @@ def xml_OBB_reader(annotation_file, dataset_type):
 			n_obj+=1
 			objs_ex=True
 	elif dataset_type=='ShipRSImageNet':
+		tree = ET.parse(annot_file)
+		root = tree.getroot()
 		n_obj=0
 		for j in root.iter('object'):
 			Class_id = j.find('level_3').text
@@ -74,34 +77,43 @@ def xml_OBB_reader(annotation_file, dataset_type):
 			objs_ex=True
 	elif dataset_type=='DOTA':
 		n_obj=0
-		for j in root.iter('object'):
-			#print(j.find('Class').text)
-			Class_id = np.where(DOTA_cls==j.find('Class').text)[0]+1
-
-			bndbox = j.find('bndbox')
-			x_min = int(bndbox.find('xmin').text)
-			y_min = int(bndbox.find('ymin').text)
-			x_max = int(bndbox.find('xmax').text)
-			y_max = int(bndbox.find('ymax').text)
-			cx = (x_min + x_max)/2
-			cy = (y_min + y_max)/2
-			w = x_max - x_min
-			h = y_max - y_min
-			if (n_obj==0):
-				coors = np.array([Class_id, cx, cy, w, h])
+		lines_hbb = annot_file.readlines()
+		difs=[]
+		for j, line_hbb in enumerate(lines_hbb):
+			if j==0:
+				source = line_hbb
+			elif j==1:
+				gsd = line_hbb
 			else:
-				coors = np.vstack([coors, [Class_id, cx, cy, w, h]])
-			n_obj+=1
-			objs_ex=True
-
+				coors_hbb = np.array(line_hbb.split(" ")[:8]).astype(float)
+				cl = line_hbb.split(" ")[8]
+				dif = line_hbb.split(" ")[9]
+				Class_id = np.where(DOTA_cls==cl)[0]+1
+				x_min = coors_hbb[0::2].min()
+				y_min = coors_hbb[1::2].min()
+				x_max = coors_hbb[0::2].max()
+				y_max = coors_hbb[1::2].max()
+				cx = (x_min + x_max)/2
+				cy = (y_min + y_max)/2
+				w = x_max - x_min
+				h = y_max - y_min
+				if (n_obj==0):
+					coors = np.array([Class_id, cx, cy, w, h])
+				else:
+					coors = np.vstack([coors, [Class_id, cx, cy, w, h]])
+				difs.append(dif)
+				n_obj+=1
+				objs_ex=True
+		difs = np.array(difs)
+		extra_desc = [source, gsd, difs]
 
 	annot_file.close()
 	if objs_ex==True:
-		return coors.reshape(-1,5), objs_ex
+		return coors.reshape(-1,5), objs_ex, extra_desc
 	else:
-		return None, objs_ex
+		return None, objs_ex, extra_desc
 
-def create_XML(annotation_file, im_w, im_h, objs_rboxes, objs_hboxes, Classes, dataset_type):
+def create_files(annotation_file, im_w, im_h, objs_rboxes, objs_hboxes, desc, Classes, dataset_type):
 	if dataset_type=='HRSC2016':
 		root = ET.Element('HRSC_Image')
 		Img_ID = ET.SubElement(root, 'Img_ID')
@@ -173,8 +185,11 @@ def create_XML(annotation_file, im_w, im_h, objs_rboxes, objs_hboxes, Classes, d
 			w.text = str(w1)
 			h.text = str(h1)
 			ang.text = str(orient)
-
-
+		
+		xml_string = ET.tostring(root, encoding='utf-8', method='xml')
+		formatted_xml = minidom.parseString(xml_string).toprettyxml(indent="  ")
+		with open(annotation_file, 'w') as xml_file:
+			xml_file.write(formatted_xml)
 
 	elif dataset_type=='ShipRSImageNet':
 		root = ET.Element('annotation')
@@ -226,8 +241,32 @@ def create_XML(annotation_file, im_w, im_h, objs_rboxes, objs_hboxes, Classes, d
 			y3.text = str(objs_rboxes[i][2][1])
 			x4.text = str(objs_rboxes[i][3][0])
 			y4.text = str(objs_rboxes[i][3][1])
+		
+		xml_string = ET.tostring(root, encoding='utf-8', method='xml')
+		formatted_xml = minidom.parseString(xml_string).toprettyxml(indent="  ")
+		with open(annotation_file, 'w') as xml_file:
+			xml_file.write(formatted_xml)
 
 	elif dataset_type=='DOTA':
+		f = open(annotation_file, 'w')
+		f.writelines(desc[0])
+		f.writelines(desc[1])
+		for i, obj in enumerate(objs_rboxes):
+			x1 = str(objs_rboxes[i][0][0])
+			y1 = str(objs_rboxes[i][0][1])
+			x2 = str(objs_rboxes[i][1][0])
+			y2 = str(objs_rboxes[i][1][1])
+			x3 = str(objs_rboxes[i][2][0])
+			y3 = str(objs_rboxes[i][2][1])
+			x4 = str(objs_rboxes[i][3][0])
+			y4 = str(objs_rboxes[i][3][1])
+
+			cl = DOTA_cls[Classes[i]-1]
+			dif = str(desc[2][i])
+			f.writelines(x1+' '+y1+' '+x2+' '+y2+' '+x3+' '+y3+' '+x4+' '+y4+' '+cl+' '+dif)
+		f.close()
+
+		"""
 		root = ET.Element('annotation')
 		filename = ET.SubElement(root, 'filename')
 		filename.text = annotation_file.split('/')[-1][:-4]+'.png'
@@ -281,9 +320,7 @@ def create_XML(annotation_file, im_w, im_h, objs_rboxes, objs_hboxes, Classes, d
 			y3.text = str(objs_rboxes[i][2][1])
 			x4.text = str(objs_rboxes[i][3][0])
 			y4.text = str(objs_rboxes[i][3][1])
+		"""
 
 
-	xml_string = ET.tostring(root, encoding='utf-8', method='xml')
-	formatted_xml = minidom.parseString(xml_string).toprettyxml(indent="  ")
-	with open(annotation_file, 'w') as xml_file:
-		xml_file.write(formatted_xml)
+	

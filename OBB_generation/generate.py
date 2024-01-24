@@ -11,7 +11,7 @@ import copy
 
 from segment_anything import sam_model_registry, SamPredictor
 
-from utils.annot_utils import xml_OBB_reader, create_XML
+from utils.annot_utils import file_OBB_reader, create_files
 from utils import bbox_utils
 
 
@@ -26,6 +26,8 @@ parser.add_argument('--kernel_size_perc', type=float, default=0.03)
 parser.add_argument('--kernel_type', type=str, default='ellipsoid')
 parser.add_argument('--n_points', type=int, default=5)
 parser.add_argument('--image_vis', type=bool, default=False)
+parser.add_argument('--images_with_masks_path', type=str)
+parser.add_argument('--images_with_boxes_path', type=str)
 parser.add_argument('--gen_mode', action='store_true')
 
 args = parser.parse_args() 
@@ -40,26 +42,32 @@ def mask_predictor_one_obj(predictor, input_p, input_l, input_box):
 	return mask, score
 
 
-def run_plots_nopoints(image, img_name, masks, gt_BBs, mask_BBs, mask_RBBs, output_dir, OBBs=False):
+def run_plots_nopoints(image, img_name, masks, gt_BBs, mask_BBs, mask_RBBs, output_mask_dir, output_box_dir, OBBs=False):
 	plt.figure(figsize=(10, 10))
 	plt.imshow(image)
-	"""
+	
 	for mask in masks:
 		show_mask(mask, plt.gca(), random_color=True)
-	
+	plt.axis('off')
+	plt.savefig(f'{output_mask_dir}/{img_name[:-4]}.bmp')
+	plt.close()
+	"""
 	for gt_bb in gt_BBs:
 		show_box(gt_bb, plt.gca(), 'green')
 	"""
+	plt.figure(figsize=(10, 10))
+	plt.imshow(image)
 	if OBBs:
 		for mask_rbb in mask_RBBs:
-			show_rbox(mask_rbb, plt.gca(), 'white')
+			show_rbox(mask_rbb, plt.gca(), 'red')
 	else:
 		for mask_bb in mask_BBs:
-			show_box(mask_bb, plt.gca(), 'red')
-
+			show_box(mask_bb, plt.gca(), 'white')
 	plt.axis('off')
-	plt.savefig(f'{output_dir}/{img_name[:-4]}.jpg')
+	plt.savefig(f'{output_box_dir}/{img_name[:-4]}.bmp')
 	plt.close()
+
+	
 
 def run_plots(image, img_name, points, masks, output_dir, with_masks=False):
 	plt.figure(figsize=(10, 10))
@@ -132,7 +140,7 @@ def one_img_sam(args, image, labels, predictor):
 
 	return masks, diag_direct
 
-def angle_calc_for_IOU_thres(image, image_name , masks, diag_dir, labels, IOUs, angle_info, length_info, opening_ang_info, im_w, im_h, img_vis, thres, kern_perc, kern_type):
+def angle_calc_for_IOU_thres(args, image, image_name , masks, diag_dir, labels, IOUs, angle_info, length_info, opening_ang_info, im_w, im_h, img_vis, thres, kern_perc, kern_type):
 	mask_boxes = np.zeros((len(masks), 4))
 	mask_rboxes=[]
 	mask_hboxes=[]
@@ -167,7 +175,7 @@ def angle_calc_for_IOU_thres(image, image_name , masks, diag_dir, labels, IOUs, 
 			IOUs.append(IOU)
 	
 	if img_vis:
-		run_plots_nopoints(image, image_name, masks, ground_truth_boxes, mask_boxes, mask_rboxes, 'ShipRSImageNet_segmentations_corr', OBBs=True)
+		run_plots_nopoints(image, image_name, masks, ground_truth_boxes, mask_boxes, mask_rboxes, args.images_with_masks_path, args.images_with_boxes_path, OBBs=True)
 	
 
 	return mask_rboxes, mask_hboxes, Cls
@@ -175,9 +183,15 @@ def angle_calc_for_IOU_thres(image, image_name , masks, diag_dir, labels, IOUs, 
 
 def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 	if args.gen_mode:
-		aug_dir_path_annot = args.new_annotations_path#os.path.join('/'+os.path.join(*args.image_path.split('/')[:-1]), args.new_annotations_dir)
+		aug_dir_path_annot = args.new_annotations_path
 		if not os.path.exists(aug_dir_path_annot):
 			os.mkdir(aug_dir_path_annot)
+	if args.image_vis:
+		assert args.images_with_masks_path != None and args.images_with_boxes_path != None
+		if not os.path.exists(args.images_with_masks_path):
+			os.mkdir(args.images_with_masks_path)
+		if not os.path.exists(args.images_with_boxes_path):
+			os.mkdir(args.images_with_boxes_path)
 		
 	IOUs=[]
 	angle_info = []
@@ -187,14 +201,14 @@ def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 	for i in tqdm(range(0,len(image_filenames)), desc='Segmented images'):
 		image = cv2.imread(os.path.join(args.image_path, image_filenames[i]))
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-		labels, exist_obj = xml_OBB_reader(os.path.join(args.annotation_path, annotation_filenames[i]), args.dataset)
+		labels, exist_obj, extr_dsc = file_OBB_reader(os.path.join(args.annotation_path, annotation_filenames[i]), args.dataset)
 		if exist_obj==True:
 			classes.append(labels[:,0])
 			masks, diag_dir = one_img_sam(args, image, labels.astype(float), predictor)
-			mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
+			mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(args, image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
 			if args.gen_mode:
 				annot = os.path.join(aug_dir_path_annot, annotation_filenames[i])
-				create_XML(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, Cls, args.dataset)
+				create_files(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, extr_dsc, Cls, args.dataset)
 		else:
 			if args.gen_mode:
 				os.system(f'cp {os.path.join(args.annotation_path, annotation_filenames[i])} {os.path.join(aug_dir_path_annot, annotation_filenames[i])}')
@@ -234,11 +248,11 @@ def main(args):
 
 
 	# Uncomment to save numpy arrays with object IoUs, class, and orientation distributions
-	"""
+	
 	np.save('IOU', IOUs)
 	np.save('gt_classes', Classes)
 	np.savetxt('Classes_n_Angles_corr.csv', Angles_per_class, delimiter=',')
-	"""
+	
 	
 	
 	

@@ -112,7 +112,10 @@ def rotated_BB_calculation(mask, diag_dir, gt_BB, kern_type, kern_size):
 
 
 	mask_close = cv2.morphologyEx(mask_int, cv2.MORPH_CLOSE, kernel)
-	contours, hierarchy = cv2.findContours(image=mask_close, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
+	if mask_close.max()!=0:
+		contours, hierarchy = cv2.findContours(image=mask_close, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
+	else:
+		contours, hierarchy = cv2.findContours(image=mask_int, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_SIMPLE)
 	color = cv2.cvtColor(mask_close, cv2.COLOR_GRAY2RGB)
 	cont_2d = max(contours, key=cv2.contourArea)[:,0,:]
 
