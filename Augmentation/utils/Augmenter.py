@@ -85,6 +85,7 @@ class Augmenter:
 
 			objs_added = np.sum(histogram)
 			fils_used = []
+			print('Augmenting phase 1')
 			while curr_histogram[ind_max]<2*upper_obj_bound:
 				fil_selected = random.choice(cp_annot_files[:,0])
 				fil_hist = histogram_calc(self.args, [fil_selected]).sum(axis=0)
@@ -99,7 +100,9 @@ class Augmenter:
 					objs_added=int(curr_histogram.sum())
 
 			new_upper_obj_bound = curr_histogram.max()
-			while objs_added<2*new_upper_obj_bound*(180//self.args.bin_granularity):
+			print('Augmenting phase 2')
+			while objs_added<2*upper_obj_bound*(180//self.args.bin_granularity):
+				print(objs_added)
 				fil_selected = random.choice(cp_annot_files[:,0])
 				fil_hist = histogram_calc(self.args, [fil_selected]).sum(axis=0)
 				rot_ang, Vars = self.uniformity_check(curr_histogram, fil_hist)
