@@ -7,6 +7,8 @@ def histogram_calc(args, annotation_filenames):
 		orientation_histogram = np.zeros((31, 180//args.bin_granularity))
 	elif args.dataset_type=='ShipRSImageNet':
 		orientation_histogram = np.zeros((50, 180//args.bin_granularity))
+	elif args.dataset_type=='DOTA_v1.5':
+		orientation_histogram = np.zeros((16, 180//args.bin_granularity))
 	
 	for i in range(0,len(annotation_filenames)):
 		fil_path = os.path.join(args.annotation_path, annotation_filenames[i])
@@ -24,7 +26,7 @@ def histogram_calc(args, annotation_filenames):
 			round_angles = np.array(round_angles)
 			round_angles[np.where(round_angles==180)]=0
 		
-		elif args.dataset_type=='ShipRSImageNet':
+		elif (args.dataset_type=='ShipRSImageNet') or (args.dataset_type=='DOTA_v1.5'):
 			round_angles=[]
 			for k in range(len(objs_info)):
 				xs = objs_info[k,1::2]
