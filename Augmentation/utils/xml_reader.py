@@ -10,12 +10,46 @@ HRSC_classes_dict = {1:'100000001' , 2:'100000002' , 3:'100000003' , 4:'10000000
 					 26:'100000028', 27:'100000029', 28:'100000030', 29:'100000031', 30:'100000032',
 					 31:'100000033'}
 
+DOTA_v1_5_classes_dict = {1:'plane', 2:'ship', 3:'storage-tank', 4:'baseball-diamond', 5:'tennis-court', 6:'basketball-court', 
+						  7:'ground-track-field', 8:'harbor', 9:'bridge', 10:'large-vehicle', 11:'small-vehicle', 12:'helicopter',
+						  13:'roundabout', 14:'soccer-ball-field', 15:'swimming-pool', 16:'container-crane'}
+
 HRSC_classes_dict_inv = {v: k for k, v in HRSC_classes_dict.items()}
+DOTA_v1_5_classes_dict_inv = {v: k for k, v in DOTA_v1_5_classes_dict.items()}
+
 
 def annot_obj_reader(path, dataset_type):
-	tree = ET.parse(path)
-	root = tree.getroot()
-	if dataset_type=='HRSC2016':
+	if dataset_type=='DOTA_v1.5':
+		fil = open(path, 'r')
+		lines = fil.readlines()
+		for j, line in enumerate(lines):
+			if j==0:
+				source = line
+			elif j==1:
+				gsd = line
+			else:
+				#coors_hbb = np.array(line.split(" ")[:8]).astype(float)
+				items = line.split(" ")
+				cl = items[8]
+				dif = items[9].astype(int)
+				Class_id = DOTA_v1_5_classes_dict_inv[cl]
+				x1 = items[0].astype(float)
+				y1 = items[1].astype(float)
+				x2 = items[2].astype(float)
+				y2 = items[3].astype(float)
+				x3 = items[4].astype(float)
+				y3 = items[5].astype(float)
+				x4 = items[6].astype(float)
+				y4 = items[7].astype(float)
+				if (j==2):
+					obj_info = np.array([Class_id,x1,y1,x2,y2,x3,y3,x4,y4]).reshape(1,9)
+				else:
+					obj_info = np.vstack([obj_info, [Class_id,x1,y1,x2,y2,x3,y3,x4,y4]])
+		return obj_info
+
+	elif dataset_type=='HRSC2016':
+		tree = ET.parse(path)
+		root = tree.getroot()
 		objs = root.find('HRSC_Objects').findall('HRSC_Object')
 		if objs==[]:
 			return []
@@ -36,6 +70,8 @@ def annot_obj_reader(path, dataset_type):
 			return obj_info
 	
 	elif dataset_type=='ShipRSImageNet':
+		tree = ET.parse(path)
+		root = tree.getroot()
 		objs = root.findall('object')
 		if objs==[]:
 			return []

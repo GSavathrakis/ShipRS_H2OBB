@@ -33,7 +33,11 @@ ShipRSImageNet_classes_dict = {1:'Other Ship', 2:'Other Warship', 3:'Submarine',
 					45:'Sailboat', 46:'Fishing Vessel', 47:'Oil Tanker', 48:'Hovercraft',
 					49:'Motorboat', 50:'Dock'}
 
-Classes_Dict = [HRSC_classes_dict, ShipRSImageNet_classes_dict]	
+DOTA_v1_5_classes_dict = {1:'plane', 2:'ship', 3:'storage-tank', 4:'baseball-diamond', 5:'tennis-court', 6:'basketball-court', 
+						  7:'ground-track-field', 8:'harbor', 9:'bridge', 10:'large-vehicle', 11:'small-vehicle', 12:'helicopter',
+						  13:'roundabout', 14:'soccer-ball-field', 15:'swimming-pool', 16:'container-crane'}
+
+Classes_Dict = [DOTA_v1_5_classes_dict, HRSC_classes_dict, ShipRSImageNet_classes_dict]	
 
 class Augmenter:
 	def __init__(self, args):
@@ -53,14 +57,23 @@ class Augmenter:
 				fil_hist = histogram_calc(self.args, [fil_selected]).sum(axis=0)
 				if objs_added==0:
 					curr_histogram+=fil_hist
-					img_sh, img_name = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), 0)
-					self.rotate_annots(fil_selected, 0, img_sh)
+					if self.args.dataset_type=='DOTA_v1.5':
+						img_sh, img_name, old_img_sh = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.png'), 0)
+						self.rotate_annots(fil_selected, 0, img_sh, old_img_sh)
+					else:
+						img_sh, img_name, _ = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), 0)
+						self.rotate_annots(fil_selected, 0, img_sh)
+					
 
 				else:
 					rot_ang, Vars = self.uniformity_check(curr_histogram, fil_hist)
 					curr_histogram += np.roll(fil_hist, rot_ang//self.args.bin_granularity)
-					img_sh, img_name = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), -rot_ang)
-					self.rotate_annots(fil_selected, -rot_ang, img_sh)
+					if self.args.dataset_type=='DOTA_v1.5':
+						img_sh, img_name, old_img_sh = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.png'), -rot_ang)
+						self.rotate_annots(fil_selected, -rot_ang, img_sh, old_img_sh)
+					else:
+						img_sh, img_name, _ = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), -rot_ang)
+						self.rotate_annots(fil_selected, -rot_ang, img_sh)
 					
 				objs_added=int(curr_histogram.sum())
 				cp_annot_files = np.delete(cp_annot_files, np.where(cp_annot_files[:,0]==fil_selected), axis=0)
@@ -69,9 +82,14 @@ class Augmenter:
 			angs_init = np.zeros(len(cp_annot_files))
 			files_init = []
 			for i in range(len(cp_annot_files)):
-				ann_name_num = cp_annot_files[i][0].split('/')[-1][:-4]+'_1.xml'
-				img_name_num_old = cp_annot_files[i][0].split('/')[-1][:-4]+'.bmp'
-				img_name_num_new = cp_annot_files[i][0].split('/')[-1][:-4]+'_1.bmp'
+				if self.args.dataset_type=='DOTA_v1.5':
+					ann_name_num = cp_annot_files[i][0].split('/')[-1][:-4]+'_1.txt'
+					img_name_num_old = cp_annot_files[i][0].split('/')[-1][:-4]+'.png'
+					img_name_num_new = cp_annot_files[i][0].split('/')[-1][:-4]+'_1.png'
+				else:
+					ann_name_num = cp_annot_files[i][0].split('/')[-1][:-4]+'_1.xml'
+					img_name_num_old = cp_annot_files[i][0].split('/')[-1][:-4]+'.bmp'
+					img_name_num_new = cp_annot_files[i][0].split('/')[-1][:-4]+'_1.bmp'
 				files_init = np.append(files_init, img_name_num_new[:-6])
 				os.system(f'cp {cp_annot_files[i][0]} {os.path.join(self.args.aug_annotation_path, ann_name_num)}')
 				os.system(f'cp {os.path.join(self.args.image_path, img_name_num_old)} {os.path.join(self.args.aug_image_path, img_name_num_new)}')
@@ -85,6 +103,7 @@ class Augmenter:
 
 			objs_added = np.sum(histogram)
 			fils_used = []
+			print('Augmenting phase 1')
 			while curr_histogram[ind_max]<2*upper_obj_bound:
 				fil_selected = random.choice(cp_annot_files[:,0])
 				fil_hist = histogram_calc(self.args, [fil_selected]).sum(axis=0)
@@ -92,21 +111,33 @@ class Augmenter:
 				rot_ang = (ind_max - rand_obj_ind)*self.args.bin_granularity
 				if rot_ang not in angs_init[np.where(files_init==fil_selected.split('/')[-1][:-4])]:
 					curr_histogram += np.roll(fil_hist, rot_ang//self.args.bin_granularity)
-					img_sh, img_name = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), -rot_ang)
-					self.rotate_annots(fil_selected, -rot_ang, img_sh)
+					if self.args.dataset_type=='DOTA_v1.5':
+						img_sh, img_name, old_img_sh = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.png'), -rot_ang)
+						self.rotate_annots(fil_selected, -rot_ang, img_sh, old_img_sh)
+					else:
+						img_sh, img_name, _ = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), -rot_ang)
+						self.rotate_annots(fil_selected, -rot_ang, img_sh)
+					
 					files_init = np.append(files_init, fil_selected.split('/')[-1][:-4])
 					angs_init = np.append(angs_init, rot_ang)
 					objs_added=int(curr_histogram.sum())
 
 			new_upper_obj_bound = curr_histogram.max()
-			while objs_added<2*new_upper_obj_bound*(180//self.args.bin_granularity):
+			print('Augmenting phase 2')
+			while objs_added<2*upper_obj_bound*(180//self.args.bin_granularity):
+				print(objs_added)
 				fil_selected = random.choice(cp_annot_files[:,0])
 				fil_hist = histogram_calc(self.args, [fil_selected]).sum(axis=0)
 				rot_ang, Vars = self.uniformity_check(curr_histogram, fil_hist)
 				if ((curr_histogram + np.roll(fil_hist, rot_ang//self.args.bin_granularity)).max()<=new_upper_obj_bound and rot_ang not in angs_init[np.where(files_init==fil_selected.split('/')[-1][:-4])]):
 					curr_histogram += np.roll(fil_hist, rot_ang//self.args.bin_granularity)
-					img_sh, img_name = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), -rot_ang)
-					self.rotate_annots(fil_selected, -rot_ang, img_sh)
+					if self.args.dataset_type=='DOTA_v1.5':
+						img_sh, img_name, old_img_sh = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.png'), -rot_ang)
+						self.rotate_annots(fil_selected, -rot_ang, img_sh, old_img_sh)
+					else:
+						img_sh, img_name, _ = self.rotate_img(os.path.join(self.args.image_path, fil_selected.split('/')[-1][:-4]+'.bmp'), -rot_ang)
+						self.rotate_annots(fil_selected, -rot_ang, img_sh)
+					
 					files_init = np.append(files_init, fil_selected.split('/')[-1][:-4])
 					angs_init = np.append(angs_init, rot_ang)
 					objs_added=int(curr_histogram.sum())
@@ -196,9 +227,9 @@ class Augmenter:
 					img_name = img_aug[:-6] + str(int(img_aug[-6:-4])+1) + img_aug[-4:]
 		cv2.imwrite(os.path.join(self.args.aug_image_path, img_name) , cv2.cvtColor(img_rot, cv2.COLOR_BGR2RGB))
 		
-		return img_rot.shape, img_name
+		return img_rot.shape, img_name, img.shape
 
-	def rotate_annots(self, annot_filename, ang, img_shape):
+	def rotate_annots(self, annot_filename, ang, img_shape, prev_img_shape=None):
 		
 		if self.args.augm_method=='SSO':
 			annot_name = annot_filename.split('/')[-1]
@@ -215,9 +246,10 @@ class Augmenter:
 		path_aug = os.path.join(self.args.aug_annotation_path, annot_name)
 		os.system(f'cp {annot_filename} {path_aug}')
 		ang_rads = ang*np.pi/180
-		tree = ET.parse(path_aug)
-		root = tree.getroot()
+		
 		if self.args.dataset_type == 'HRSC2016':
+			tree = ET.parse(path_aug)
+			root = tree.getroot()
 			W = float(root.find('Img_SizeWidth').text)
 			H = float(root.find('Img_SizeHeight').text)
 			objs = root.find('HRSC_Objects').findall('HRSC_Object')
@@ -240,7 +272,11 @@ class Augmenter:
 				obj.find('mbox_ang').text = str(ang_new)
 			root.find('Img_SizeWidth').text = str(img_shape[1])
 			root.find('Img_SizeHeight').text = str(img_shape[0])
+			tree.write(path_aug)
+		
 		elif self.args.dataset_type=='ShipRSImageNet':
+			tree = ET.parse(path_aug)
+			root = tree.getroot()
 			W = float(root.find('size').find('width').text)
 			H = float(root.find('size').find('height').text)
 			objs = root.findall('object')
@@ -273,9 +309,52 @@ class Augmenter:
 				obj.find('polygon').find('y4').text = str(y4_new)
 			root.find('size').find('width').text = str(img_shape[1])
 			root.find('size').find('height').text = str(img_shape[0])
+			tree.write(path_aug)
+
+		elif self.args.dataset_type=='DOTA_v1.5':
+			assert prev_img_shape!=None
+
+			H = prev_img_shape.shape[0]
+			W = prev_img_shape.shape[1]
+
+			with open(path_aug, 'r') as fil:
+				lines = fil.readlines()
+
+			new_lines = []
+			for i, line in enumerate(lines):
+				if i<2:
+					new_lines.append(line)
+				else:
+					items = line.split(" ")
+					x1 = float(items[0])
+					y1 = float(items[1])
+					x2 = float(items[2])
+					y2 = float(items[3])
+					x3 = float(items[4])
+					y3 = float(items[5])
+					x4 = float(items[6])
+					y4 = float(items[7])
+
+					x1_new = np.cos(ang_rads)*(x1-W/2) - np.sin(ang_rads)*(H/2-y1) + img_shape[1]/2
+					y1_new = -(np.sin(ang_rads)*(x1-W/2) + np.cos(ang_rads)*(H/2-y1) - img_shape[0]/2)
+					x2_new = np.cos(ang_rads)*(x2-W/2) - np.sin(ang_rads)*(H/2-y2) + img_shape[1]/2
+					y2_new = -(np.sin(ang_rads)*(x2-W/2) + np.cos(ang_rads)*(H/2-y2) - img_shape[0]/2)
+					x3_new = np.cos(ang_rads)*(x3-W/2) - np.sin(ang_rads)*(H/2-y3) + img_shape[1]/2
+					y3_new = -(np.sin(ang_rads)*(x3-W/2) + np.cos(ang_rads)*(H/2-y3) - img_shape[0]/2)
+					x4_new = np.cos(ang_rads)*(x4-W/2) - np.sin(ang_rads)*(H/2-y4) + img_shape[1]/2
+					y4_new = -(np.sin(ang_rads)*(x4-W/2) + np.cos(ang_rads)*(H/2-y4) - img_shape[0]/2)
 
 
-		tree.write(path_aug)
+					new_line = str(f'{str(x1_new)} {str(y1_new)} {str(x2_new)} {str(y2_new)} {str(x3_new)} {str(y3_new)} {str(x4_new)} {str(y4_new)} {items[8]} {items[9]}')
+					new_lines.append(new_line)
+
+			with open(path_aug, 'w') as fil_n:
+				fil_n.writelines(new_lines)
+
+
+
+
+		
 
 	def custom_sort_key(self, filename):
 		match = re.search(r'_(\d+)\.', filename)

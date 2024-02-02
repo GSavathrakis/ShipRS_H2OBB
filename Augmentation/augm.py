@@ -22,7 +22,7 @@ parser.add_argument('--image_path', type=str)
 parser.add_argument('--annotation_path', type=str)
 parser.add_argument('--aug_image_path', type=str)
 parser.add_argument('--aug_annotation_path', type=str)
-parser.add_argument('--dataset_type', type=str, choices=['HRSC2016','ShipRSImageNet'])
+parser.add_argument('--dataset_type', type=str, choices=['DOTA_v1.5','HRSC2016','ShipRSImageNet'])
 
 parser.add_argument('--augm_method', type=str, choices=['SSO','ISO','ISC'], default='ISO')
 parser.add_argument('--bin_granularity', type=int, default=10)

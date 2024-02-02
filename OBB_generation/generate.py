@@ -46,19 +46,19 @@ def mask_predictor_one_obj(predictor, input_p, input_l, input_box):
 
 
 def run_plots_nopoints(image, img_name, masks, gt_BBs, mask_BBs, mask_RBBs, output_mask_dir, output_box_dir, OBBs=False):
-	plt.figure(figsize=(10, 10))
+	plt.figure()
 	plt.imshow(image)
 	
 	for mask in masks:
 		show_mask(mask, plt.gca(), random_color=True)
 	plt.axis('off')
-	plt.savefig(f'{output_mask_dir}/{img_name[:-4]}.bmp')
+	plt.savefig(f'{output_mask_dir}/{img_name[:-4]}.jpg')
 	plt.close()
 	"""
 	for gt_bb in gt_BBs:
 		show_box(gt_bb, plt.gca(), 'green')
 	"""
-	plt.figure(figsize=(10, 10))
+	plt.figure()
 	plt.imshow(image)
 	if OBBs:
 		for mask_rbb in mask_RBBs:
@@ -67,7 +67,7 @@ def run_plots_nopoints(image, img_name, masks, gt_BBs, mask_BBs, mask_RBBs, outp
 		for mask_bb in mask_BBs:
 			show_box(mask_bb, plt.gca(), 'white')
 	plt.axis('off')
-	plt.savefig(f'{output_box_dir}/{img_name[:-4]}.bmp')
+	plt.savefig(f'{output_box_dir}/{img_name[:-4]}.jpg')
 	plt.close()
 
 	
