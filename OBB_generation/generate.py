@@ -21,6 +21,7 @@ parser.add_argument('--image_path', type=str)
 parser.add_argument('--annotation_path', type=str)
 parser.add_argument('--sam_checkpoint_path', type=str)
 parser.add_argument('--new_annotations_path', type=str)
+parser.add_argument('--starting_img', type=int, default=0)
 parser.add_argument('--IOU_thres', type=float, default=0.7)
 parser.add_argument('--kernel_size_perc', type=float, default=0.03)
 parser.add_argument('--kernel_type', type=str, default='ellipsoid')
@@ -28,6 +29,8 @@ parser.add_argument('--n_points', type=int, default=5)
 parser.add_argument('--image_vis', type=bool, default=False)
 parser.add_argument('--images_with_masks_path', type=str)
 parser.add_argument('--images_with_boxes_path', type=str)
+parser.add_argument('--iou_fname', type=str)
+parser.add_argument('--cl_n_ang_fname', type=str)
 parser.add_argument('--gen_mode', action='store_true')
 
 args = parser.parse_args() 
@@ -119,28 +122,40 @@ def show_rbox(box, ax, edgecolor):
 	ax.add_patch(patch)
 
 def one_img_sam(args, image, labels, predictor):
-	label_points = bbox_utils.box_cxcywh_to_cxcy(labels)
-	labels_diags = bbox_utils.box_cxcywh_to_diag(labels, args.n_points)
-	label_boxes = bbox_utils.box_cxcywh_to_xyxy(labels)
-	predictor.set_image(image)
+	if args.n_points>1:
+		labels_diags = bbox_utils.box_cxcywh_to_diag(labels, args.n_points)
+		label_boxes = bbox_utils.box_cxcywh_to_xyxy(labels)
+		predictor.set_image(image)
 
 
-	masks=[]
-	foreg1 = np.hstack((np.array([1]), np.ones((args.n_points//2)), np.zeros((args.n_points//2))))
-	foreg2 = np.hstack((np.array([1]), np.zeros((args.n_points//2)), np.ones((args.n_points//2))))
-	for i in range(len(labels_diags)):
-		mask_obj_i_diag1, score_obj_i_diag1 = mask_predictor_one_obj(predictor, labels_diags[i], foreg1, label_boxes[i])
-		mask_obj_i_diag2, score_obj_i_diag2 = mask_predictor_one_obj(predictor, labels_diags[i], foreg2, label_boxes[i])
-		if (score_obj_i_diag2[0]>=score_obj_i_diag1[0]):
-			masks.append(mask_obj_i_diag2)
-			diag_direct = 'bltr'
-		else:
-			masks.append(mask_obj_i_diag1)
-			diag_direct = 'tlbr'
+		masks=[]
+		foreg1 = np.hstack((np.array([1]), np.ones((args.n_points//2)), np.zeros((args.n_points//2))))
+		foreg2 = np.hstack((np.array([1]), np.zeros((args.n_points//2)), np.ones((args.n_points//2))))
+		for i in range(len(labels_diags)):
+			mask_obj_i_diag1, score_obj_i_diag1 = mask_predictor_one_obj(predictor, labels_diags[i], foreg1, label_boxes[i])
+			mask_obj_i_diag2, score_obj_i_diag2 = mask_predictor_one_obj(predictor, labels_diags[i], foreg2, label_boxes[i])
+			if (score_obj_i_diag2[0]>=score_obj_i_diag1[0]):
+				masks.append(mask_obj_i_diag2)
+				diag_direct = 'bltr'
+			else:
+				masks.append(mask_obj_i_diag1)
+				diag_direct = 'tlbr'
+
+	else:
+		label_points = bbox_utils.box_cxcywh_to_cxcy(labels)
+		label_boxes = bbox_utils.box_cxcywh_to_xyxy(labels)
+		predictor.set_image(image)
+
+		masks=[]
+		for i in range(len(label_points)):
+			mask, score = mask_predictor_one_obj(predictor, label_points[i], np.array([1]), label_boxes[i])
+			masks.append(mask)
+			diag_direct = 'undetermined'
+
 
 	return masks, diag_direct
 
-def angle_calc_for_IOU_thres(args, image, image_name , masks, diag_dir, labels, IOUs, angle_info, length_info, opening_ang_info, im_w, im_h, img_vis, thres, kern_perc, kern_type):
+def angle_calc_for_IOU_thres(args, f_iou_nm, f_cl_ang_nm, image, image_name , masks, diag_dir, labels, IOUs, angle_info, length_info, opening_ang_info, im_w, im_h, img_vis, thres, kern_perc, kern_type):
 	mask_boxes = np.zeros((len(masks), 4))
 	mask_rboxes=[]
 	mask_hboxes=[]
@@ -156,6 +171,8 @@ def angle_calc_for_IOU_thres(args, image, image_name , masks, diag_dir, labels, 
 		n+=1
 	mask_boxes = mask_boxes.astype(int)
 	ground_truth_boxes = bbox_utils.box_cxcywh_to_xyxy(labels).astype(int)
+	f_iou = open(f_iou_nm, 'a')
+	f_cl_ang = open(f_cl_ang_nm, 'a')
 	for j in range(len(ground_truth_boxes)):
 		if j not in inds_no_masks:
 			l_gt = np.sqrt(labels[j][3]**2+labels[j][4]**2)
@@ -173,6 +190,10 @@ def angle_calc_for_IOU_thres(args, image, image_name , masks, diag_dir, labels, 
 				length_info.append(l_gt)
 				opening_ang_info.append(2*np.arctan2(0.5*w, 0.5*l)*180./np.pi)
 			IOUs.append(IOU)
+			f_iou.writelines(f'{str(IOU)}\n')
+			f_cl_ang.writelines(f'{labels[j,0]} {angle}\n')
+	f_iou.close()
+	f_cl_ang.close()
 	
 	if img_vis:
 		run_plots_nopoints(image, image_name, masks, ground_truth_boxes, mask_boxes, mask_rboxes, args.images_with_masks_path, args.images_with_boxes_path, OBBs=True)
@@ -189,23 +210,25 @@ def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 	if args.image_vis:
 		assert args.images_with_masks_path != None and args.images_with_boxes_path != None
 		if not os.path.exists(args.images_with_masks_path):
-			os.mkdir(args.images_with_masks_path)
+			os.makedirs(args.images_with_masks_path)
 		if not os.path.exists(args.images_with_boxes_path):
-			os.mkdir(args.images_with_boxes_path)
+			os.makedirs(args.images_with_boxes_path)
 		
 	IOUs=[]
 	angle_info = []
 	length_info = []
 	opening_ang_info = []
 	classes=[]
-	for i in tqdm(range(0,len(image_filenames)), desc='Segmented images'):
+	fIoU_name = args.iou_fname#'IoU_1pt.txt'
+	fcl_ang_name = args.cl_n_ang_fname#'classes_n_angles_1pt.txt'
+	for i in tqdm(range(args.starting_img, len(image_filenames)), desc='Segmented images'):
 		image = cv2.imread(os.path.join(args.image_path, image_filenames[i]))
 		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 		labels, exist_obj, extr_dsc = file_OBB_reader(os.path.join(args.annotation_path, annotation_filenames[i]), args.dataset)
 		if exist_obj==True:
 			classes.append(labels[:,0])
 			masks, diag_dir = one_img_sam(args, image, labels.astype(float), predictor)
-			mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(args, image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
+			mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(args, fIoU_name, fcl_ang_name, image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
 			if args.gen_mode:
 				annot = os.path.join(aug_dir_path_annot, annotation_filenames[i])
 				create_files(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, extr_dsc, Cls, args.dataset)
@@ -241,17 +264,17 @@ def main(args):
 	lengths = np.array(lengths)
 	openings = np.array(openings)
 	
-	print(f'% objects with IOU>90%: {len(np.where(IOUs>=0.9)[0])/len(IOUs)*100}')
-	print(f'% objects with IOU>80%: {len(np.where(IOUs>=0.8)[0])/len(IOUs)*100}')
-	print(f'% objects with IOU>70%: {len(np.where(IOUs>=0.7)[0])/len(IOUs)*100}')
-	print(f'% objects with IOU>60%: {len(np.where(IOUs>=0.6)[0])/len(IOUs)*100}')
+	#print(f'% objects with IOU>90%: {len(np.where(IOUs>=0.9)[0])/len(IOUs)*100}')
+	#print(f'% objects with IOU>80%: {len(np.where(IOUs>=0.8)[0])/len(IOUs)*100}')
+	#print(f'% objects with IOU>70%: {len(np.where(IOUs>=0.7)[0])/len(IOUs)*100}')
+	#print(f'% objects with IOU>60%: {len(np.where(IOUs>=0.6)[0])/len(IOUs)*100}')
 
 
 	# Uncomment to save numpy arrays with object IoUs, class, and orientation distributions
 	
-	np.save('IOU', IOUs)
-	np.save('gt_classes', Classes)
-	np.savetxt('Classes_n_Angles_corr.csv', Angles_per_class, delimiter=',')
+	#np.save('IOU', IOUs)
+	#np.save('gt_classes', Classes)
+	#np.savetxt('Classes_n_Angles_corr.csv', Angles_per_class, delimiter=',')
 	
 	
 	

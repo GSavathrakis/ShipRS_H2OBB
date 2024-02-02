@@ -87,6 +87,7 @@ def rotated_BB_calculation(mask, diag_dir, gt_BB, kern_type, kern_size):
 		sq_dist_grid = np.sqrt((kern_grid[0]-int(2**0.5*kern_size//2))**2+(kern_grid[1]-int(2**0.5*kern_size//2))**2)
 		kernel[np.where(sq_dist_grid<=int(2**0.5*kern_size//2))]=1
 	elif kern_type=='ellipsoid':
+		assert diag_dir!='undetermined'
 		if diag_dir=='tlbr':
 			rot = np.arctan2(gt_BB[3]-gt_BB[1], gt_BB[2]-gt_BB[0]) + np.pi/2
 		elif diag_dir=='bltr':
