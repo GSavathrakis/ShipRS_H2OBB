@@ -13,7 +13,7 @@ import argparse
 import xml.etree.ElementTree as ET
 import re
 
-from utils.xml_reader import annot_obj_reader
+from utils.annot_reader import annot_obj_reader
 from utils.distributions import histogram_calc
 from utils.Augmenter import Augmenter
 

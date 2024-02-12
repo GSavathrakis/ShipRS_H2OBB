@@ -1,6 +1,6 @@
 import os
 import numpy as np 
-from .xml_reader import annot_obj_reader
+from .annot_reader import annot_obj_reader
 
 def histogram_calc(args, annotation_filenames):
 	if args.dataset_type=='HRSC2016':

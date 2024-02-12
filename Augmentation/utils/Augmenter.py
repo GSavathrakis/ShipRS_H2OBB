@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 import random
 import re
 
-from .xml_reader import annot_obj_reader
+from .annot_reader import annot_obj_reader
 from .distributions import histogram_calc
 
 HRSC_classes_dict = {1:'100000001' , 2:'100000002' , 3:'100000003' , 4:'100000004' , 5:'100000005' ,
@@ -314,8 +314,8 @@ class Augmenter:
 		elif self.args.dataset_type=='DOTA_v1.5':
 			assert prev_img_shape!=None
 
-			H = prev_img_shape.shape[0]
-			W = prev_img_shape.shape[1]
+			H = prev_img_shape[0]
+			W = prev_img_shape[1]
 
 			with open(path_aug, 'r') as fil:
 				lines = fil.readlines()
