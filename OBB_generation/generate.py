@@ -155,12 +155,13 @@ def one_img_sam(args, image, labels, predictor):
 
 	return masks, diag_direct
 
-def angle_calc_for_IOU_thres(args, f_iou_nm, f_cl_ang_nm, image, image_name , masks, diag_dir, labels, IOUs, angle_info, length_info, opening_ang_info, im_w, im_h, img_vis, thres, kern_perc, kern_type):
+def angle_calc_for_IOU_thres(args, f_iou_nm, f_cl_ang_nm, image, image_name , masks, diag_dir, labels, difs, IOUs, angle_info, length_info, opening_ang_info, im_w, im_h, img_vis, thres, kern_perc, kern_type):
 	mask_boxes = np.zeros((len(masks), 4))
 	mask_rboxes=[]
 	mask_hboxes=[]
 	inds_no_masks=[]
 	Cls=[]
+	Difs=[]
 	n=0
 	for mask in masks:
 		if ((np.where(mask[0]==True)[0].shape[0]==0.) or (np.where(mask[0]==True)[1].shape[0]==0.)):
@@ -184,6 +185,8 @@ def angle_calc_for_IOU_thres(args, f_iou_nm, f_cl_ang_nm, image, image_name , ma
 				mask_rboxes.append(box)
 				mask_hboxes.append(hbox_j)
 				Cls.append(int(labels[j][0]))
+				if args.dataset=='DOTA':
+					Difs.append(int(difs[0][j]))
 				if (angle<0):
 					angle = angle + 180
 				angle_info.append(np.array([labels[j,0], angle]))
@@ -198,8 +201,8 @@ def angle_calc_for_IOU_thres(args, f_iou_nm, f_cl_ang_nm, image, image_name , ma
 	if img_vis:
 		run_plots_nopoints(image, image_name, masks, ground_truth_boxes, mask_boxes, mask_rboxes, args.images_with_masks_path, args.images_with_boxes_path, OBBs=True)
 	
-
-	return mask_rboxes, mask_hboxes, Cls
+	
+	return mask_rboxes, mask_hboxes, Cls, Difs
 
 
 def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
@@ -228,10 +231,10 @@ def multi_img_sam(args, image_filenames, annotation_filenames, predictor):
 		if exist_obj==True:
 			classes.append(labels[:,0])
 			masks, diag_dir = one_img_sam(args, image, labels.astype(float), predictor)
-			mask_rbb, mask_hbb, Cls = angle_calc_for_IOU_thres(args, fIoU_name, fcl_ang_name, image, image_filenames[i], masks, diag_dir, labels.astype(float), IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
+			mask_rbb, mask_hbb, Cls, difs = angle_calc_for_IOU_thres(args, fIoU_name, fcl_ang_name, image, image_filenames[i], masks, diag_dir, labels.astype(float), extr_dsc, IOUs, angle_info, length_info, opening_ang_info, image.shape[1], image.shape[0], args.image_vis, args.IOU_thres, args.kernel_size_perc, args.kernel_type)
 			if args.gen_mode:
 				annot = os.path.join(aug_dir_path_annot, annotation_filenames[i])
-				create_files(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, extr_dsc, Cls, args.dataset)
+				create_files(annot, image.shape[1], image.shape[0], mask_rbb, mask_hbb, difs, Cls, args.dataset)
 		else:
 			if args.gen_mode:
 				os.system(f'cp {os.path.join(args.annotation_path, annotation_filenames[i])} {os.path.join(aug_dir_path_annot, annotation_filenames[i])}')
