@@ -19,8 +19,8 @@ def main(args):
 	#print(hist.sum(axis=0))
 	
 	plt.figure(figsize=(7,6))
-	plt.vlines(np.linspace(0,170,180//args.bin_granularity), 0, hist.sum(axis=0), linewidth=20)
-	plt.xticks(np.linspace(0,170,180//args.bin_granularity), fontsize=10)
+	plt.vlines(np.linspace(0, 180-args.bin_granularity, 180//args.bin_granularity), 0, hist.sum(axis=0), linewidth=20)
+	plt.xticks(np.linspace(0, 180-args.bin_granularity, 180//args.bin_granularity), fontsize=10)
 	plt.yticks()
 	plt.xlabel('Orientations (deg)', fontsize=15)
 	plt.ylabel('# Objects', fontsize=15)
