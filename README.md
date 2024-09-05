@@ -20,8 +20,8 @@ pip install git+https://github.com/facebookresearch/segment-anything.git
 ## Usage
 Initially, clone the repository.
 ```
-git clone https://github.com/GSavathrakis/hbb_to_obb.git
-cd hbb_to_obb
+git clone https://github.com/GSavathrakis/ShipRS_H2OBB.git
+cd ShipRS_H2OBB
 ```
 Download the segment-anything model checkpoint from the [official segment-anything model repo](https://github.com/facebookresearch/segment-anything)
 
